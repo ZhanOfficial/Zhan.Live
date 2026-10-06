@@ -3,133 +3,118 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🎥 Video to Live Photo — ZhanOfficial</title>
+    <title>ZhanOfficial Live — Video to Live Photo</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div id="app">
-        <!-- HEADER -->
-        <header>
-            <h1>🎥 ➡️ 📸 VIDEO TO LIVE PHOTO</h1>
-            <div id="status-badge">● READY</div>
-        </header>
 
-        <!-- MODE TABS -->
-        <div id="mode-tabs">
-            <button class="tab-btn active" data-mode="live">📹 Live Camera</button>
-            <button class="tab-btn" data-mode="upload">📁 Upload Video</button>
+    <!-- ===== WELCOME SCREEN ===== -->
+    <div id="welcome-screen">
+        <div id="welcome-bg"></div>
+        <div id="welcome-content">
+            <div class="welcome-logo">📸</div>
+            <h1 class="welcome-title">Welcome to Website</h1>
+            <h1 class="welcome-brand">ZhanOfficial Live</h1>
+            <p class="welcome-sub">Ubah video jadi Live Photo — dengan AI Assistant</p>
+            <button id="enter-btn">🚀 MASUK</button>
+            <div class="welcome-footer">Powered by ZhanOfficial AI 🗿</div>
         </div>
-
-        <!-- ===== MODE 1: LIVE CAMERA ===== -->
-        <section id="live-mode" class="mode-section">
-            <div id="camera-wrapper">
-                <video id="video" autoplay playsinline muted></video>
-                <canvas id="snapshot-canvas" style="display:none;"></canvas>
-                
-                <div id="live-indicator" class="hidden">
-                    <span class="dot"></span> AUTO-CAPTURING
-                </div>
-
-                <div id="camera-off-msg">
-                    <p>📷 Kamera belum aktif</p>
-                    <button id="start-cam-btn">▶️ Nyalakan Kamera</button>
-                </div>
-            </div>
-
-            <!-- LIVE CONTROLS -->
-            <div id="live-controls">
-                <div class="control-group">
-                    <label>⏱️ Interval:</label>
-                    <select id="interval-select">
-                        <option value="1000">1 detik</option>
-                        <option value="2000" selected>2 detik</option>
-                        <option value="3000">3 detik</option>
-                        <option value="5000">5 detik</option>
-                        <option value="10000">10 detik</option>
-                    </select>
-                </div>
-
-                <div class="control-group">
-                    <label>🎨 Filter:</label>
-                    <select id="filter-select">
-                        <option value="none">Normal</option>
-                        <option value="grayscale(1)">B&W</option>
-                        <option value="sepia(0.8)">Sepia</option>
-                        <option value="brightness(1.3)">Terang</option>
-                        <option value="contrast(1.5)">Kontras</option>
-                        <option value="saturate(2)">Vivid</option>
-                        <option value="invert(1)">Invert</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="live-actions">
-                <button id="auto-toggle-btn" class="btn-primary">▶️ MULAI AUTO-CAPTURE</button>
-                <button id="manual-capture-btn" class="btn-secondary">📸 Ambil Manual</button>
-            </div>
-        </section>
-
-        <!-- ===== MODE 2: UPLOAD VIDEO ===== -->
-        <section id="upload-mode" class="mode-section hidden">
-            <div id="upload-area">
-                <input type="file" id="video-input" accept="video/*" hidden />
-                <div id="drop-zone">
-                    <div class="upload-icon">📁</div>
-                    <p><strong>Klik atau drag video</strong> ke sini</p>
-                    <small>Format: MP4, WebM, MOV, AVI</small>
-                </div>
-            </div>
-
-            <div id="upload-preview" class="hidden">
-                <video id="uploaded-video" controls playsinline></video>
-                
-                <div id="upload-controls">
-                    <div class="control-group">
-                        <label>📍 Posisi:</label>
-                        <input type="range" id="seek-slider" min="0" max="100" value="0" />
-                        <span id="seek-time">0:00</span>
-                    </div>
-
-                    <div class="control-group">
-                        <label>⏱️ Interval:</label>
-                        <select id="upload-interval">
-                            <option value="500">0.5 detik</option>
-                            <option value="1000" selected>1 detik</option>
-                            <option value="2000">2 detik</option>
-                            <option value="5000">5 detik</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="upload-actions">
-                    <button id="extract-frame-btn" class="btn-primary">📸 Extract Frame Ini</button>
-                    <button id="extract-all-btn" class="btn-primary">⚡ Extract Semua Frame</button>
-                    <button id="reset-upload-btn" class="btn-secondary">🔄 Ganti Video</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== GALLERY ===== -->
-        <section id="gallery-section">
-            <div id="gallery-header">
-                <h2>🖼️ Hasil Foto (<span id="photo-count">0</span>)</h2>
-                <div id="gallery-actions">
-                    <button id="download-all-btn" class="btn-small">⬇️ Download Semua</button>
-                    <button id="clear-btn" class="btn-small danger">🗑️ Hapus Semua</button>
-                </div>
-            </div>
-            <div id="gallery"></div>
-        </section>
     </div>
 
-    <!-- PREVIEW MODAL -->
-    <div id="preview-modal" class="hidden">
-        <div id="preview-content">
-            <img id="preview-img" />
-            <div id="preview-info"></div>
-            <div id="preview-actions">
-                <a id="download-one-btn" download>⬇️ Download</a>
-                <button id="close-preview-btn">✖️ Tutup</button>
+    <!-- ===== MAIN APP ===== -->
+    <div id="app" class="hidden">
+        <header>
+            <div class="logo">📸 <span>ZhanOfficial Live</span></div>
+            <button id="ai-toggle-btn" class="ai-btn">🤖 AI</button>
+        </header>
+
+        <!-- STEP 1: UPLOAD -->
+        <div id="upload-step" class="step">
+            <input type="file" id="file-input" accept="video/*" hidden />
+            <div id="drop-zone">
+                <div class="icon">🎬</div>
+                <h2>Kirim Video</h2>
+                <p>Klik atau drag video ke sini</p>
+                <small>Otomatis diproses jadi Live Photo ✨</small>
+            </div>
+        </div>
+
+        <!-- STEP 2: PROCESSING -->
+        <div id="processing-step" class="step hidden">
+            <div class="processing-animation">
+                <div class="film-strip">
+                    <div class="frame"></div>
+                    <div class="frame"></div>
+                    <div class="frame"></div>
+                    <div class="frame"></div>
+                    <div class="frame"></div>
+                    <div class="frame"></div>
+                </div>
+                <div class="scan-line"></div>
+            </div>
+            <h2 class="processing-title">Memproses Video...</h2>
+            <p class="processing-sub" id="processing-status">Menganalisis video</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-percent" id="progress-percent">0%</div>
+            <div class="processing-steps">
+                <div class="proc-step" data-step="1">
+                    <span class="step-dot"></span> Analisis video
+                </div>
+                <div class="proc-step" data-step="2">
+                    <span class="step-dot"></span> Ambil frame terbaik (AI)
+                </div>
+                <div class="proc-step" data-step="3">
+                    <span class="step-dot"></span> Rekam 3 detik
+                </div>
+                <div class="proc-step" data-step="4">
+                    <span class="step-dot"></span> Finalisasi Live Photo
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: RESULT -->
+        <div id="result-step" class="step hidden">
+            <h2 class="result-title">✅ Live Photo Siap!</h2>
+            
+            <div id="live-photo-card">
+                <img id="result-img" />
+                <video id="result-video" playsinline muted loop></video>
+                <div id="live-badge">LIVE</div>
+                <div id="hold-hint">👆 Tekan & tahan untuk mainkan</div>
+                <div id="ai-pick-badge">🤖 AI Pick</div>
+            </div>
+
+            <div id="result-actions">
+                <button id="download-btn" class="btn-primary">⬇️ Download</button>
+                <button id="reset-btn" class="btn-secondary">🔄 Buat Lagi</button>
+            </div>
+        </div>
+
+        <!-- AI ASSISTANT PANEL -->
+        <div id="ai-panel" class="hidden">
+            <div id="ai-header">
+                <div class="ai-avatar">🤖</div>
+                <div>
+                    <div class="ai-name">Zhan AI</div>
+                    <div class="ai-status">● Online</div>
+                </div>
+                <button id="ai-close-btn">✖</button>
+            </div>
+            <div id="ai-messages">
+                <div class="ai-msg bot">
+                    Yo bro! 🤖 Gue Zhan AI. Butuh bantuan apa? Bisa tanya soal Live Photo, video, atau apapun!
+                </div>
+            </div>
+            <div id="ai-suggestions">
+                <button class="ai-suggest">Apa itu Live Photo?</button>
+                <button class="ai-suggest">Cara pakai website ini</button>
+                <button class="ai-suggest">Tips video bagus</button>
+            </div>
+            <div id="ai-input-box">
+                <input type="text" id="ai-input" placeholder="Tanya AI..." />
+                <button id="ai-send">➤</button>
             </div>
         </div>
     </div>
@@ -137,8 +122,6 @@
     <!-- TOAST -->
     <div id="toast" class="hidden"></div>
 
-    <!-- JSZip for ZIP download -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
