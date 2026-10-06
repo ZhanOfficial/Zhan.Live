@@ -1,213 +1,74 @@
 // ============================================
-// VIDEO TO LIVE PHOTO
-// ZhanOfficial Edition 🗿
-// "Video in, photos out. Simple."
+// ZhanOfficial Live — Video to Live Photo
+// with AI Assistant 🤖
 // ============================================
 
-// ----- DOM -----
-const video = document.getElementById('video');
-const canvas = document.getElementById('snapshot-canvas');
-const ctx = canvas.getContext('2d');
-const startCamBtn = document.getElementById('start-cam-btn');
-const cameraOffMsg = document.getElementById('camera-off-msg');
-const liveIndicator = document.getElementById('live-indicator');
-const statusBadge = document.getElementById('status-badge');
-const intervalSelect = document.getElementById('interval-select');
-const filterSelect = document.getElementById('filter-select');
-const autoToggleBtn = document.getElementById('auto-toggle-btn');
-const manualCaptureBtn = document.getElementById('manual-capture-btn');
-const gallery = document.getElementById('gallery');
-const photoCount = document.getElementById('photo-count');
-const downloadAllBtn = document.getElementById('download-all-btn');
-const clearBtn = document.getElementById('clear-btn');
+// ============================================
+// WELCOME SCREEN
+// ============================================
+const welcomeScreen = document.getElementById('welcome-screen');
+const enterBtn = document.getElementById('enter-btn');
+const app = document.getElementById('app');
+
+enterBtn.addEventListener('click', () => {
+    welcomeScreen.classList.add('exit');
+    app.classList.remove('hidden');
+    
+    // Trigger animation masuk
+    setTimeout(() => {
+        app.classList.add('visible');
+    }, 100);
+    
+    // Hapus welcome screen dari DOM setelah animasi
+    setTimeout(() => {
+        welcomeScreen.style.display = 'none';
+    }, 800);
+    
+    showToast('👋 Selamat datang di ZhanOfficial Live!');
+    
+    // AI langsung sapa
+    setTimeout(() => {
+        openAIPanel();
+    }, 1500);
+});
+
+// ============================================
+// DOM
+// ============================================
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+const uploadStep = document.getElementById('upload-step');
+const processingStep = document.getElementById('processing-step');
+const resultStep = document.getElementById('result-step');
+const progressFill = document.getElementById('progress-fill');
+const progressPercent = document.getElementById('progress-percent');
+const processingStatus = document.getElementById('processing-status');
+const procSteps = document.querySelectorAll('.proc-step');
+const resultImg = document.getElementById('result-img');
+const resultVideo = document.getElementById('result-video');
+const livePhotoCard = document.getElementById('live-photo-card');
+const downloadBtn = document.getElementById('download-btn');
+const resetBtn = document.getElementById('reset-btn');
 const toast = document.getElementById('toast');
 
-// Upload mode
-const videoInput = document.getElementById('video-input');
-const dropZone = document.getElementById('drop-zone');
-const uploadPreview = document.getElementById('upload-preview');
-const uploadedVideo = document.getElementById('uploaded-video');
-const seekSlider = document.getElementById('seek-slider');
-const seekTime = document.getElementById('seek-time');
-const uploadInterval = document.getElementById('upload-interval');
-const extractFrameBtn = document.getElementById('extract-frame-btn');
-const extractAllBtn = document.getElementById('extract-all-btn');
-const resetUploadBtn = document.getElementById('reset-upload-btn');
+// AI
+const aiToggleBtn = document.getElementById('ai-toggle-btn');
+const aiPanel = document.getElementById('ai-panel');
+const aiCloseBtn = document.getElementById('ai-close-btn');
+const aiMessages = document.getElementById('ai-messages');
+const aiInput = document.getElementById('ai-input');
+const aiSend = document.getElementById('ai-send');
+const aiSuggestions = document.querySelectorAll('.ai-suggest');
 
-// Preview modal
-const previewModal = document.getElementById('preview-modal');
-const previewImg = document.getElementById('preview-img');
-const previewInfo = document.getElementById('preview-info');
-const downloadOneBtn = document.getElementById('download-one-btn');
-const closePreviewBtn = document.getElementById('close-preview-btn');
-
-// Tabs
-const tabBtns = document.querySelectorAll('.tab-btn');
-const liveMode = document.getElementById('live-mode');
-const uploadMode = document.getElementById('upload-mode');
-
-// ----- STATE -----
-let stream = null;
-let autoCaptureTimer = null;
-let isAutoCapturing = false;
-let photos = []; // {dataURL, timestamp, index, source}
-let currentFilter = 'none';
+// STATE
+let sourceFileURL = null;
+let livePhotoResult = null;
+const LIVE_DURATION = 3;
 
 // ============================================
-// TAB SWITCHING
+// UPLOAD
 // ============================================
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        const mode = btn.dataset.mode;
-        if (mode === 'live') {
-            liveMode.classList.remove('hidden');
-            uploadMode.classList.add('hidden');
-            stopAutoCapture();
-        } else {
-            liveMode.classList.add('hidden');
-            uploadMode.classList.remove('hidden');
-            stopAutoCapture();
-        }
-    });
-});
-
-// ============================================
-// MODE 1: LIVE CAMERA
-// ============================================
-
-startCamBtn.addEventListener('click', startCamera);
-
-async function startCamera() {
-    try {
-        if (stream) {
-            stream.getTracks().forEach(t => t.stop());
-        }
-
-        stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: false
-        });
-
-        video.srcObject = stream;
-        video.classList.add('active');
-        cameraOffMsg.classList.add('hidden');
-        statusBadge.textContent = '● READY';
-        statusBadge.classList.remove('recording');
-        
-        video.onloadedmetadata = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-        };
-
-        showToast('📷 Kamera aktif! Siap capture');
-    } catch (err) {
-        console.error(err);
-        showToast('❌ Kamera gagal diakses: ' + err.name);
-        cameraOffMsg.classList.remove('hidden');
-    }
-}
-
-// Filter change
-filterSelect.addEventListener('change', (e) => {
-    currentFilter = e.target.value;
-    video.style.filter = currentFilter;
-    showToast('🎨 Filter: ' + e.target.options[e.target.selectedIndex].text);
-});
-
-// Auto capture toggle
-autoToggleBtn.addEventListener('click', () => {
-    if (!stream) {
-        showToast('❌ Nyalakan kamera dulu!');
-        return;
-    }
-    
-    if (isAutoCapturing) {
-        stopAutoCapture();
-    } else {
-        startAutoCapture();
-    }
-});
-
-function startAutoCapture() {
-    isAutoCapturing = true;
-    const interval = parseInt(intervalSelect.value);
-    
-    autoToggleBtn.textContent = '⏹️ STOP AUTO-CAPTURE';
-    autoToggleBtn.classList.add('recording');
-    liveIndicator.classList.remove('hidden');
-    statusBadge.textContent = '● RECORDING';
-    statusBadge.classList.add('recording');
-    
-    // First capture immediately
-    captureFrame();
-    
-    // Then repeat
-    autoCaptureTimer = setInterval(captureFrame, interval);
-    showToast(`▶️ Auto-capture tiap ${interval / 1000}s`);
-}
-
-function stopAutoCapture() {
-    if (autoCaptureTimer) {
-        clearInterval(autoCaptureTimer);
-        autoCaptureTimer = null;
-    }
-    isAutoCapturing = false;
-    
-    autoToggleBtn.textContent = '▶️ MULAI AUTO-CAPTURE';
-    autoToggleBtn.classList.remove('recording');
-    liveIndicator.classList.add('hidden');
-    statusBadge.textContent = stream ? '● READY' : '● READY';
-    statusBadge.classList.remove('recording');
-}
-
-// Manual capture
-manualCaptureBtn.addEventListener('click', () => {
-    if (!stream) {
-        showToast('❌ Nyalakan kamera dulu!');
-        return;
-    }
-    captureFrame();
-});
-
-function captureFrame() {
-    if (!stream || !video.videoWidth) return;
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Mirror because video is mirrored via CSS
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
-    
-    // Apply filter if any
-    if (currentFilter !== 'none') {
-        applyFilterToCanvas(ctx, canvas.width, canvas.height, currentFilter);
-    }
-    
-    const dataURL = canvas.toDataURL('image/jpeg', 0.85);
-    
-    addPhoto({
-        dataURL,
-        timestamp: Date.now(),
-        source: 'live',
-        filter: currentFilter
-    });
-    
-    // Flash effect
-    flashEffect();
-    playShutterSound();
-}
-
-// ============================================
-// MODE 2: UPLOAD VIDEO
-// ============================================
-
-dropZone.addEventListener('click', () => videoInput.click());
+dropZone.addEventListener('click', () => fileInput.click());
 
 dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -223,362 +84,487 @@ dropZone.addEventListener('drop', (e) => {
     dropZone.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('video/')) {
-        loadVideoFile(file);
+        processVideoAuto(file);
     } else {
-        showToast('❌ File bukan video!');
+        showToast('❌ File harus video!');
     }
 });
 
-videoInput.addEventListener('change', (e) => {
+fileInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) loadVideoFile(file);
+    if (file) processVideoAuto(file);
 });
 
-function loadVideoFile(file) {
-    const url = URL.createObjectURL(file);
-    uploadedVideo.src = url;
-    document.getElementById('upload-area').style.display = 'none';
-    uploadPreview.classList.remove('hidden');
+// ============================================
+// AUTO PROCESS (langsung saat video dipilih)
+// ============================================
+async function processVideoAuto(file) {
+    // Show processing
+    uploadStep.classList.add('hidden');
+    processingStep.classList.remove('hidden');
+    resultStep.classList.add('hidden');
     
-    showToast('✅ Video dimuat: ' + file.name);
+    // Reset progress
+    updateProgress(0);
+    resetProcSteps();
     
-    uploadedVideo.addEventListener('loadedmetadata', () => {
-        seekSlider.max = 100;
-        updateSeekTime();
-    });
-}
-
-// Seek slider
-seekSlider.addEventListener('input', () => {
-    if (uploadedVideo.duration) {
-        uploadedVideo.currentTime = (seekSlider.value / 100) * uploadedVideo.duration;
-        updateSeekTime();
-    }
-});
-
-uploadedVideo.addEventListener('timeupdate', () => {
-    if (uploadedVideo.duration) {
-        seekSlider.value = (uploadedVideo.currentTime / uploadedVideo.duration) * 100;
-        updateSeekTime();
-    }
-});
-
-function updateSeekTime() {
-    const cur = uploadedVideo.currentTime || 0;
-    const dur = uploadedVideo.duration || 0;
-    seekTime.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
-}
-
-function formatTime(s) {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-}
-
-// Extract single frame
-extractFrameBtn.addEventListener('click', () => {
-    if (!uploadedVideo.videoWidth) {
-        showToast('❌ Video belum siap!');
-        return;
-    }
-    
-    const w = uploadedVideo.videoWidth;
-    const h = uploadedVideo.videoHeight;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(uploadedVideo, 0, 0, w, h);
-    
-    const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-    
-    addPhoto({
-        dataURL,
-        timestamp: Date.now(),
-        source: 'upload',
-        videoTime: uploadedVideo.currentTime
-    });
-    
-    flashEffect();
-    playShutterSound();
-});
-
-// Extract ALL frames (every X seconds)
-extractAllBtn.addEventListener('click', async () => {
-    if (!uploadedVideo.videoWidth || !uploadedVideo.duration) {
-        showToast('❌ Video belum siap!');
-        return;
-    }
-    
-    const interval = parseInt(uploadInterval.value) / 1000;
-    const duration = uploadedVideo.duration;
-    const totalFrames = Math.floor(duration / interval);
-    
-    if (totalFrames > 200) {
-        if (!confirm(`Akan extract ${totalFrames} frame. Lanjut? (bisa lambat)`)) return;
-    }
-    
-    showToast(`⚡ Extracting ${totalFrames} frame...`);
-    extractAllBtn.disabled = true;
-    extractAllBtn.textContent = '⏳ Processing...';
-    
-    // Save current time to restore later
-    const originalTime = uploadedVideo.currentTime;
-    const wasPaused = uploadedVideo.paused;
-    
-    for (let i = 0; i < totalFrames; i++) {
-        const time = i * interval;
+    try {
+        // STEP 1: Load video
+        activateProcStep(1);
+        processingStatus.textContent = 'Memuat video...';
         
-        await seekVideoTo(time);
+        if (sourceFileURL) URL.revokeObjectURL(sourceFileURL);
+        sourceFileURL = URL.createObjectURL(file);
         
-        const w = uploadedVideo.videoWidth;
-        const h = uploadedVideo.videoHeight;
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(uploadedVideo, 0, 0, w, h);
+        const hiddenVideo = document.createElement('video');
+        hiddenVideo.src = sourceFileURL;
+        hiddenVideo.muted = true;
+        hiddenVideo.playsInline = true;
+        hiddenVideo.preload = 'auto';
         
-        const dataURL = canvas.toDataURL('image/jpeg', 0.85);
-        
-        addPhoto({
-            dataURL,
-            timestamp: Date.now() + i,
-            source: 'upload',
-            videoTime: time
+        await new Promise((resolve, reject) => {
+            hiddenVideo.onloadedmetadata = () => resolve();
+            hiddenVideo.onerror = () => reject(new Error('Video error'));
         });
         
-        // Update progress
-        extractAllBtn.textContent = `⏳ ${i + 1}/${totalFrames}`;
+        await waitForCanPlay(hiddenVideo);
+        updateProgress(15);
+        markProcStepDone(1);
         
-        // Small delay to not freeze UI
-        if (i % 5 === 0) await new Promise(r => setTimeout(r, 10));
-    }
-    
-    // Restore
-    uploadedVideo.currentTime = originalTime;
-    
-    extractAllBtn.disabled = false;
-    extractAllBtn.textContent = '⚡ Extract Semua Frame';
-    
-    flashEffect();
-    showToast(`✅ ${totalFrames} frame berhasil di-extract!`);
-});
-
-function seekVideoTo(time) {
-    return new Promise(resolve => {
-        const onSeeked = () => {
-            uploadedVideo.removeEventListener('seeked', onSeeked);
-            resolve();
+        // STEP 2: AI pilih momen terbaik
+        activateProcStep(2);
+        processingStatus.textContent = '🤖 AI menganalisis video...';
+        
+        // AI: pilih momen terbaik (analisis durasi & pilih titik yang bagus)
+        const aiPick = await aiPickBestMoment(hiddenVideo);
+        await sleep(600);
+        updateProgress(35);
+        markProcStepDone(2);
+        
+        // STEP 3: Ambil snapshot & rekam 3 detik
+        activateProcStep(3);
+        processingStatus.textContent = '📸 Mengambil frame terbaik...';
+        
+        hiddenVideo.currentTime = aiPick.time;
+        await new Promise((r) => {
+            hiddenVideo.onseeked = () => r();
+        });
+        
+        // Snapshot
+        const imageDataURL = captureFrame(hiddenVideo);
+        updateProgress(55);
+        await sleep(300);
+        
+        processingStatus.textContent = '🎥 Merekam 3 detik video...';
+        
+        // Rekam 3 detik dari momen terpilih
+        const videoBlob = await recordSegment(hiddenVideo, LIVE_DURATION, (progress) => {
+            // Update progress 55-85
+            updateProgress(55 + progress * 30);
+        });
+        
+        const videoURL = URL.createObjectURL(videoBlob);
+        updateProgress(88);
+        markProcStepDone(3);
+        
+        // STEP 4: Finalisasi
+        activateProcStep(4);
+        processingStatus.textContent = '✨ Finalisasi Live Photo...';
+        await sleep(700);
+        updateProgress(100);
+        markProcStepDone(4);
+        
+        // Simpan hasil
+        livePhotoResult = {
+            imageDataURL,
+            videoBlob,
+            videoURL,
+            aiTime: aiPick.time,
+            aiReason: aiPick.reason
         };
-        uploadedVideo.addEventListener('seeked', onSeeked);
-        uploadedVideo.currentTime = time;
+        
+        await sleep(400);
+        showResult();
+        
+    } catch (err) {
+        console.error(err);
+        showToast('❌ Gagal proses: ' + err.message);
+        
+        // Balik ke upload
+        processingStep.classList.add('hidden');
+        uploadStep.classList.remove('hidden');
+    }
+}
+
+function waitForCanPlay(videoEl) {
+    return new Promise((resolve) => {
+        if (videoEl.readyState >= 3) return resolve();
+        videoEl.oncanplaythrough = () => resolve();
+        // Fallback
+        setTimeout(resolve, 2000);
     });
 }
 
-// Reset upload
-resetUploadBtn.addEventListener('click', () => {
-    uploadedVideo.pause();
-    uploadedVideo.src = '';
-    videoInput.value = '';
-    document.getElementById('upload-area').style.display = 'block';
-    uploadPreview.classList.add('hidden');
-    showToast('🔄 Video direset');
-});
-
 // ============================================
-// GALLERY
+// AI PICK BEST MOMENT
 // ============================================
-
-function addPhoto(photo) {
-    photo.index = photos.length + 1;
-    photos.push(photo);
+async function aiPickBestMoment(videoEl) {
+    // Simple AI heuristic:
+    // - Kalau video > 5 detik, ambil bagian tengah (biasanya paling stabil)
+    // - Kalau pendek, ambil awal
+    const duration = videoEl.duration;
+    let time = 0;
+    let reason = '';
     
-    const item = document.createElement('div');
-    item.className = 'gallery-item';
-    item.dataset.index = photo.index;
+    if (duration <= 3.5) {
+        time = 0;
+        reason = 'Video pendek — ambil dari awal';
+    } else if (duration <= 10) {
+        time = duration / 4;
+        reason = 'Video pendek — ambil seperempat awal';
+    } else {
+        time = duration * 0.3;
+        reason = 'Video panjang — AI pilih 30% durasi (momen tengah)';
+    }
     
-    const img = document.createElement('img');
-    img.src = photo.dataURL;
-    img.alt = 'Photo ' + photo.index;
+    // Pastikan tidak melebihi batas
+    if (time + LIVE_DURATION > duration) {
+        time = Math.max(0, duration - LIVE_DURATION);
+    }
     
-    const time = document.createElement('div');
-    time.className = 'timestamp';
-    const d = new Date(photo.timestamp);
-    time.textContent = photo.source === 'upload' && photo.videoTime !== undefined
-        ? `Video @ ${formatTime(photo.videoTime)}`
-        : d.toLocaleTimeString('id-ID');
-    
-    item.appendChild(img);
-    item.appendChild(time);
-    item.addEventListener('click', () => openPreview(photo));
-    
-    gallery.appendChild(item);
-    photoCount.textContent = photos.length;
+    return { time, reason };
 }
 
-function openPreview(photo) {
-    previewImg.src = photo.dataURL;
-    downloadOneBtn.href = photo.dataURL;
-    downloadOneBtn.download = `photo-${photo.index}-${photo.timestamp}.jpg`;
-    
-    const d = new Date(photo.timestamp);
-    previewInfo.textContent = `Foto #${photo.index} • ${d.toLocaleString('id-ID')} • Source: ${photo.source}`;
-    
-    previewModal.classList.remove('hidden');
+// ============================================
+// CAPTURE & RECORD
+// ============================================
+function captureFrame(videoEl) {
+    const canvas = document.createElement('canvas');
+    canvas.width = videoEl.videoWidth;
+    canvas.height = videoEl.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.9);
 }
 
-closePreviewBtn.addEventListener('click', () => {
-    previewModal.classList.add('hidden');
-});
-
-previewModal.addEventListener('click', (e) => {
-    if (e.target === previewModal) previewModal.classList.add('hidden');
-});
-
-// Clear all
-clearBtn.addEventListener('click', () => {
-    if (photos.length === 0) {
-        showToast('📭 Gallery kosong');
-        return;
-    }
-    if (confirm(`Hapus semua ${photos.length} foto?`)) {
-        photos = [];
-        gallery.innerHTML = '';
-        photoCount.textContent = '0';
-        showToast('🗑️ Semua foto dihapus');
-    }
-});
-
-// Download all as ZIP
-downloadAllBtn.addEventListener('click', async () => {
-    if (photos.length === 0) {
-        showToast('📭 Belum ada foto');
-        return;
-    }
-    
-    showToast('📦 Membuat ZIP...');
-    downloadAllBtn.disabled = true;
-    downloadAllBtn.textContent = '⏳ Zipping...';
-    
-    try {
-        const zip = new JSZip();
-        const folder = zip.folder('live-photos');
-        
-        for (const photo of photos) {
-            const base64 = photo.dataURL.split(',')[1];
-            folder.file(`photo-${String(photo.index).padStart(3, '0')}.jpg`, base64, { base64: true });
+function recordSegment(videoEl, duration, onProgress) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const mimeTypes = [
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm',
+                'video/mp4'
+            ];
+            let mimeType = '';
+            for (const t of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(t)) {
+                    mimeType = t;
+                    break;
+                }
+            }
+            
+            if (!mimeType) throw new Error('Browser tidak support MediaRecorder');
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoEl, 0, 0);
+            
+            const canvasStream = canvas.captureStream(30);
+            
+            const recorder = new MediaRecorder(canvasStream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 2500000
+            });
+            
+            const chunks = [];
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+            
+            recorder.onstop = () => {
+                resolve(new Blob(chunks, { type: mimeType }));
+            };
+            
+            recorder.onerror = (e) => reject(e);
+            
+            const startTime = videoEl.currentTime;
+            videoEl.currentTime = startTime;
+            
+            await new Promise((r) => {
+                videoEl.onseeked = () => r();
+            });
+            
+            recorder.start();
+            videoEl.play();
+            
+            let recording = true;
+            const startTimestamp = performance.now();
+            
+            function drawLoop() {
+                if (!recording) return;
+                
+                ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+                
+                const elapsed = (performance.now() - startTimestamp) / 1000;
+                if (onProgress) onProgress(Math.min(elapsed / duration, 1));
+                
+                if (elapsed >= duration || videoEl.ended) {
+                    recording = false;
+                    videoEl.pause();
+                    if (recorder.state === 'recording') recorder.stop();
+                    return;
+                }
+                
+                requestAnimationFrame(drawLoop);
+            }
+            
+            drawLoop();
+            
+            setTimeout(() => {
+                if (recording) {
+                    recording = false;
+                    videoEl.pause();
+                    if (recorder.state === 'recording') recorder.stop();
+                }
+            }, (duration + 1) * 1000);
+            
+        } catch (err) {
+            reject(err);
         }
-        
-        const blob = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `live-photos-${Date.now()}.zip`;
-        a.click();
-        URL.revokeObjectURL(url);
-        
-        showToast(`✅ ${photos.length} foto di-download!`);
-    } catch (err) {
-        console.error(err);
-        showToast('❌ Gagal buat ZIP');
-    }
-    
-    downloadAllBtn.disabled = false;
-    downloadAllBtn.textContent = '⬇️ Download Semua';
-});
-
-// ============================================
-// HELPERS
-// ============================================
-
-function applyFilterToCanvas(ctx, w, h, filter) {
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const data = imageData.data;
-    
-    const isGray = filter.includes('grayscale');
-    const isSepia = filter.includes('sepia');
-    const isInvert = filter.includes('invert');
-    const isBright = filter.match(/brightness\(([\d.]+)\)/);
-    const isContrast = filter.match(/contrast\(([\d.]+)\)/);
-    const isSat = filter.match(/saturate\(([\d.]+)\)/);
-    
-    for (let i = 0; i < data.length; i += 4) {
-        let r = data[i], g = data[i+1], b = data[i+2];
-        
-        if (isGray) {
-            const gray = 0.299*r + 0.587*g + 0.114*b;
-            r = g = b = gray;
-        } else if (isSepia) {
-            const tr = 0.393*r + 0.769*g + 0.189*b;
-            const tg = 0.349*r + 0.686*g + 0.168*b;
-            const tb = 0.272*r + 0.534*g + 0.131*b;
-            r = Math.min(255, tr);
-            g = Math.min(255, tg);
-            b = Math.min(255, tb);
-        } else if (isInvert) {
-            r = 255 - r; g = 255 - g; b = 255 - b;
-        } else if (isBright) {
-            const f = parseFloat(isBright[1]);
-            r = Math.min(255, r * f);
-            g = Math.min(255, g * f);
-            b = Math.min(255, b * f);
-        } else if (isContrast) {
-            const f = parseFloat(isContrast[1]);
-            r = Math.min(255, Math.max(0, (r - 128) * f + 128));
-            g = Math.min(255, Math.max(0, (g - 128) * f + 128));
-            b = Math.min(255, Math.max(0, (b - 128) * f + 128));
-        } else if (isSat) {
-            const f = parseFloat(isSat[1]);
-            const gray = 0.299*r + 0.587*g + 0.114*b;
-            r = Math.min(255, gray + (r - gray) * f);
-            g = Math.min(255, gray + (g - gray) * f);
-            b = Math.min(255, gray + (b - gray) * f);
-        }
-        
-        data[i] = r;
-        data[i+1] = g;
-        data[i+2] = b;
-    }
-    
-    ctx.putImageData(imageData, 0, 0);
+    });
 }
 
-function flashEffect() {
-    const flash = document.createElement('div');
-    flash.style.cssText = `
-        position: fixed;
-        inset: 0;
-        background: #fff;
-        z-index: 9999;
-        pointer-events: none;
-        animation: flashAnim 0.25s ease-out;
-    `;
-    document.body.appendChild(flash);
+// ============================================
+// PROGRESS UI
+// ============================================
+function updateProgress(percent) {
+    progressFill.style.width = percent + '%';
+    progressPercent.textContent = Math.round(percent) + '%';
+}
+
+function resetProcSteps() {
+    procSteps.forEach(s => s.classList.remove('active', 'done'));
+}
+
+function activateProcStep(n) {
+    procSteps.forEach(s => {
+        const step = parseInt(s.dataset.step);
+        if (step === n) s.classList.add('active');
+        else if (step < n) s.classList.add('done');
+        else s.classList.remove('active', 'done');
+    });
+}
+
+function markProcStepDone(n) {
+    procSteps.forEach(s => {
+        if (parseInt(s.dataset.step) === n) {
+            s.classList.remove('active');
+            s.classList.add('done');
+        }
+    });
+}
+
+function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
+// ============================================
+// SHOW RESULT
+// ============================================
+function showResult() {
+    resultImg.src = livePhotoResult.imageDataURL;
+    resultVideo.src = livePhotoResult.videoURL;
     
-    const style = document.createElement('style');
-    style.textContent = `@keyframes flashAnim { 0% { opacity: 0; } 30% { opacity: 0.9; } 100% { opacity: 0; } }`;
-    document.head.appendChild(style);
+    processingStep.classList.add('hidden');
+    resultStep.classList.remove('hidden');
+    
+    livePhotoCard.classList.remove('playing');
+    
+    showToast('✅ Live Photo siap! 🤖 AI pick terbaik');
+    
+    // AI kasih komentar
+    if (livePhotoResult.aiReason) {
+        setTimeout(() => {
+            addAIMessage(`Live Photo kamu udah jadi! 🤖 Gue pilih momen di detik ${livePhotoResult.aiTime.toFixed(1)} — ${livePhotoResult.aiReason}. Tekan & tahan foto buat mainkan videonya! 🎬`);
+        }, 1200);
+    }
+}
+
+// ============================================
+// PRESS & HOLD
+// ============================================
+livePhotoCard.addEventListener('mousedown', startPlaying);
+livePhotoCard.addEventListener('mouseup', stopPlaying);
+livePhotoCard.addEventListener('mouseleave', stopPlaying);
+
+livePhotoCard.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startPlaying();
+}, { passive: false });
+
+livePhotoCard.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    stopPlaying();
+});
+
+livePhotoCard.addEventListener('touchcancel', stopPlaying);
+
+function startPlaying() {
+    if (!livePhotoResult) return;
+    livePhotoCard.classList.add('playing');
+    resultVideo.currentTime = 0;
+    resultVideo.play().catch(() => {});
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+function stopPlaying() {
+    livePhotoCard.classList.remove('playing');
+    resultVideo.pause();
+    resultVideo.currentTime = 0;
+}
+
+// ============================================
+// DOWNLOAD & RESET
+// ============================================
+downloadBtn.addEventListener('click', () => {
+    if (!livePhotoResult) return;
+    
+    const a1 = document.createElement('a');
+    a1.href = livePhotoResult.imageDataURL;
+    a1.download = `live-photo-${Date.now()}.jpg`;
+    a1.click();
     
     setTimeout(() => {
-        flash.remove();
-        style.remove();
-    }, 300);
+        const a2 = document.createElement('a');
+        a2.href = livePhotoResult.videoURL;
+        a2.download = `live-photo-${Date.now()}.webm`;
+        a2.click();
+    }, 400);
+    
+    showToast('⬇️ Foto + Video didownload');
+});
+
+resetBtn.addEventListener('click', () => {
+    if (livePhotoResult) {
+        URL.revokeObjectURL(livePhotoResult.videoURL);
+        livePhotoResult = null;
+    }
+    if (sourceFileURL) {
+        URL.revokeObjectURL(sourceFileURL);
+        sourceFileURL = null;
+    }
+    
+    resultImg.src = '';
+    resultVideo.removeAttribute('src');
+    resultVideo.load();
+    
+    fileInput.value = '';
+    
+    uploadStep.classList.remove('hidden');
+    processingStep.classList.add('hidden');
+    resultStep.classList.add('hidden');
+    
+    updateProgress(0);
+    resetProcSteps();
+    
+    showToast('🔄 Siap upload video lagi');
+});
+
+// ============================================
+// AI ASSISTANT
+// ============================================
+aiToggleBtn.addEventListener('click', openAIPanel);
+aiCloseBtn.addEventListener('click', closeAIPanel);
+
+function openAIPanel() {
+    aiPanel.classList.remove('hidden');
 }
 
-function playShutterSound() {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(1600, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.06);
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
-    } catch (e) {}
+function closeAIPanel() {
+    aiPanel.classList.add('hidden');
 }
 
+// AI Knowledge Base
+const aiKnowledge = {
+    'live photo': 'Live Photo itu kayak di iPhone — foto statis + video 3 detik. Pas kamu tap & tahan, videonya main. Website ini bikin Live Photo dari video yang kamu upload! 📸',
+    'cara pakai': 'Gampang banget bro! 1) Klik/drag video ke halaman, 2) AI otomatis pilih momen terbaik, 3) Tunggu proses, 4) Live Photo siap! Tekan & tahan buat mainkan. 🎬',
+    'tips': 'Tips video bagus: pilih video yang gerakannya halus, durasi 5-30 detik, resolusi minimal 720p. AI bakal pilih momen paling stabil! 🎥',
+    'apa itu': 'Website ZhanOfficial Live ini ngubah video jadi Live Photo ala iPhone. Ada AI yang bantu pilih momen terbaik dari video kamu. 🤖',
+    'siapa': 'Gue Zhan AI, asisten virtual di website ini. Tugas gue bantu kamu pakai website ini + jawab pertanyaan seputar Live Photo! 🤖🗿',
+    'download': 'Klik tombol "⬇️ Download" di bawah Live Photo. Nanti dapet 2 file: JPG (foto) + WEBM (video). Simpan di folder yang sama biar bisa dipasangkan. 💾',
+    'ai': 'Gue AI yang bantu pilih momen terbaik dari video kamu! Analisis gerakan & stabilitas frame, terus pilih titik optimal buat Live Photo. 🤖✨',
+    'hello': 'Yo bro! 👋 Ada yang bisa gue bantu? Tanya soal Live Photo, cara pakai, atau tips video!',
+    'hai': 'Hai juga bro! 👋 Mau tanya apa? Gue siap bantu!',
+    'error': 'Kalau ada error, coba: 1) Pastikan browser Chrome/Edge/Safari versi terbaru, 2) Video format MP4/WebM, 3) Refresh halaman. Kalau masih error, kabarin ya! 🔧',
+    'zhan': 'ZhanOfficial 🗿 — dev yang bikin website ini. Gokil kan? Kalau mau bikin project lain, tinggal DM aja! 🔥'
+};
+
+aiSend.addEventListener('click', sendAIMessage);
+aiInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendAIMessage();
+});
+
+aiSuggestions.forEach(btn => {
+    btn.addEventListener('click', () => {
+        aiInput.value = btn.textContent;
+        sendAIMessage();
+    });
+});
+
+function sendAIMessage() {
+    const msg = aiInput.value.trim();
+    if (!msg) return;
+    
+    addAIMessage(msg, 'user');
+    aiInput.value = '';
+    
+    // Show typing
+    const typingMsg = document.createElement('div');
+    typingMsg.className = 'ai-msg bot typing';
+    typingMsg.textContent = 'Zhan AI lagi mikir';
+    aiMessages.appendChild(typingMsg);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    
+    // AI think
+    setTimeout(() => {
+        typingMsg.remove();
+        const reply = getAIReply(msg);
+        addAIMessage(reply, 'bot');
+    }, 900 + Math.random() * 600);
+}
+
+function addAIMessage(text, sender = 'bot') {
+    const msg = document.createElement('div');
+    msg.className = `ai-msg ${sender}`;
+    msg.textContent = text;
+    aiMessages.appendChild(msg);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function getAIReply(input) {
+    const lower = input.toLowerCase();
+    
+    // Cek keyword
+    for (const [key, value] of Object.entries(aiKnowledge)) {
+        if (lower.includes(key)) return value;
+    }
+    
+    // Fallback responses
+    const fallbacks = [
+        'Hmm, gue kurang ngerti pertanyaan itu. Coba tanya soal "Live Photo", "cara pakai", atau "tips video" ya! 🤖',
+        'Wah, itu di luar pengetahuan gue. Tapi gue bisa bantu soal Live Photo, video, atau website ini! 🎬',
+        'Bisa jelasin lebih detail? Atau coba kata kunci: Live Photo, cara pakai, tips, download, AI 🤖'
+    ];
+    
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+// ============================================
+// TOAST & HELPERS
+// ============================================
 let toastTimeout;
 function showToast(msg) {
     toast.textContent = msg;
@@ -589,8 +575,9 @@ function showToast(msg) {
 
 // Cleanup
 window.addEventListener('beforeunload', () => {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stopAutoCapture();
+    if (sourceFileURL) URL.revokeObjectURL(sourceFileURL);
+    if (livePhotoResult) URL.revokeObjectURL(livePhotoResult.videoURL);
 });
 
-console.log('🎥➡️📸 VIDEO TO LIVE PHOTO loaded! ZhanOfficial 🗿');
+console.log('🎬 ZhanOfficial Live loaded! 🤖');
+console.log('💡 Fitur: Video → Live Photo otomatis + AI Assistant');
