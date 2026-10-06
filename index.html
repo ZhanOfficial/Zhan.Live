@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎥 Video to Live Photo — ZhanOfficial</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app">
+        <!-- HEADER -->
+        <header>
+            <h1>🎥 ➡️ 📸 VIDEO TO LIVE PHOTO</h1>
+            <div id="status-badge">● READY</div>
+        </header>
+
+        <!-- MODE TABS -->
+        <div id="mode-tabs">
+            <button class="tab-btn active" data-mode="live">📹 Live Camera</button>
+            <button class="tab-btn" data-mode="upload">📁 Upload Video</button>
+        </div>
+
+        <!-- ===== MODE 1: LIVE CAMERA ===== -->
+        <section id="live-mode" class="mode-section">
+            <div id="camera-wrapper">
+                <video id="video" autoplay playsinline muted></video>
+                <canvas id="snapshot-canvas" style="display:none;"></canvas>
+                
+                <div id="live-indicator" class="hidden">
+                    <span class="dot"></span> AUTO-CAPTURING
+                </div>
+
+                <div id="camera-off-msg">
+                    <p>📷 Kamera belum aktif</p>
+                    <button id="start-cam-btn">▶️ Nyalakan Kamera</button>
+                </div>
+            </div>
+
+            <!-- LIVE CONTROLS -->
+            <div id="live-controls">
+                <div class="control-group">
+                    <label>⏱️ Interval:</label>
+                    <select id="interval-select">
+                        <option value="1000">1 detik</option>
+                        <option value="2000" selected>2 detik</option>
+                        <option value="3000">3 detik</option>
+                        <option value="5000">5 detik</option>
+                        <option value="10000">10 detik</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>🎨 Filter:</label>
+                    <select id="filter-select">
+                        <option value="none">Normal</option>
+                        <option value="grayscale(1)">B&W</option>
+                        <option value="sepia(0.8)">Sepia</option>
+                        <option value="brightness(1.3)">Terang</option>
+                        <option value="contrast(1.5)">Kontras</option>
+                        <option value="saturate(2)">Vivid</option>
+                        <option value="invert(1)">Invert</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="live-actions">
+                <button id="auto-toggle-btn" class="btn-primary">▶️ MULAI AUTO-CAPTURE</button>
+                <button id="manual-capture-btn" class="btn-secondary">📸 Ambil Manual</button>
+            </div>
+        </section>
+
+        <!-- ===== MODE 2: UPLOAD VIDEO ===== -->
+        <section id="upload-mode" class="mode-section hidden">
+            <div id="upload-area">
+                <input type="file" id="video-input" accept="video/*" hidden />
+                <div id="drop-zone">
+                    <div class="upload-icon">📁</div>
+                    <p><strong>Klik atau drag video</strong> ke sini</p>
+                    <small>Format: MP4, WebM, MOV, AVI</small>
+                </div>
+            </div>
+
+            <div id="upload-preview" class="hidden">
+                <video id="uploaded-video" controls playsinline></video>
+                
+                <div id="upload-controls">
+                    <div class="control-group">
+                        <label>📍 Posisi:</label>
+                        <input type="range" id="seek-slider" min="0" max="100" value="0" />
+                        <span id="seek-time">0:00</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label>⏱️ Interval:</label>
+                        <select id="upload-interval">
+                            <option value="500">0.5 detik</option>
+                            <option value="1000" selected>1 detik</option>
+                            <option value="2000">2 detik</option>
+                            <option value="5000">5 detik</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="upload-actions">
+                    <button id="extract-frame-btn" class="btn-primary">📸 Extract Frame Ini</button>
+                    <button id="extract-all-btn" class="btn-primary">⚡ Extract Semua Frame</button>
+                    <button id="reset-upload-btn" class="btn-secondary">🔄 Ganti Video</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== GALLERY ===== -->
+        <section id="gallery-section">
+            <div id="gallery-header">
+                <h2>🖼️ Hasil Foto (<span id="photo-count">0</span>)</h2>
+                <div id="gallery-actions">
+                    <button id="download-all-btn" class="btn-small">⬇️ Download Semua</button>
+                    <button id="clear-btn" class="btn-small danger">🗑️ Hapus Semua</button>
+                </div>
+            </div>
+            <div id="gallery"></div>
+        </section>
+    </div>
+
+    <!-- PREVIEW MODAL -->
+    <div id="preview-modal" class="hidden">
+        <div id="preview-content">
+            <img id="preview-img" />
+            <div id="preview-info"></div>
+            <div id="preview-actions">
+                <a id="download-one-btn" download>⬇️ Download</a>
+                <button id="close-preview-btn">✖️ Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="hidden"></div>
+
+    <!-- JSZip for ZIP download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
