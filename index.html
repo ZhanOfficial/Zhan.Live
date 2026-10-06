@@ -21,101 +21,124 @@
         </div>
     </div>
 
-    <!-- ===== MAIN APP ===== -->
+    <!-- ===== MAIN LAYOUT ===== -->
     <div id="app" class="hidden">
+        
+        <!-- HEADER -->
         <header>
             <div class="logo">📸 <span>ZhanOfficial Live</span></div>
-            <button id="ai-toggle-btn" class="ai-btn">🤖 AI</button>
+            <div class="header-badge">🤖 AI Active</div>
         </header>
 
-        <!-- STEP 1: UPLOAD -->
-        <div id="upload-step" class="step">
-            <input type="file" id="file-input" accept="video/*" hidden />
-            <div id="drop-zone">
-                <div class="icon">🎬</div>
-                <h2>Kirim Video</h2>
-                <p>Klik atau drag video ke sini</p>
-                <small>Otomatis diproses jadi Live Photo ✨</small>
-            </div>
-        </div>
+        <!-- MAIN GRID: KIRI = KONTEN, KANAN = AI -->
+        <div id="main-grid">
 
-        <!-- STEP 2: PROCESSING -->
-        <div id="processing-step" class="step hidden">
-            <div class="processing-animation">
-                <div class="film-strip">
-                    <div class="frame"></div>
-                    <div class="frame"></div>
-                    <div class="frame"></div>
-                    <div class="frame"></div>
-                    <div class="frame"></div>
-                    <div class="frame"></div>
+            <!-- ============ KOLOM KIRI ============ -->
+            <div id="left-column">
+                
+                <!-- === UPLOAD AREA (ATAS) === -->
+                <div id="upload-step" class="step">
+                    <input type="file" id="file-input" accept="video/*" hidden />
+                    <div id="drop-zone">
+                        <div class="icon">🎬</div>
+                        <h2>Upload Video</h2>
+                        <p>Klik atau drag video ke sini</p>
+                        <small>✨ Otomatis diproses jadi Live Photo</small>
+                    </div>
                 </div>
-                <div class="scan-line"></div>
-            </div>
-            <h2 class="processing-title">Memproses Video...</h2>
-            <p class="processing-sub" id="processing-status">Menganalisis video</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <div class="progress-percent" id="progress-percent">0%</div>
-            <div class="processing-steps">
-                <div class="proc-step" data-step="1">
-                    <span class="step-dot"></span> Analisis video
-                </div>
-                <div class="proc-step" data-step="2">
-                    <span class="step-dot"></span> Ambil frame terbaik (AI)
-                </div>
-                <div class="proc-step" data-step="3">
-                    <span class="step-dot"></span> Rekam 3 detik
-                </div>
-                <div class="proc-step" data-step="4">
-                    <span class="step-dot"></span> Finalisasi Live Photo
-                </div>
-            </div>
-        </div>
 
-        <!-- STEP 3: RESULT -->
-        <div id="result-step" class="step hidden">
-            <h2 class="result-title">✅ Live Photo Siap!</h2>
-            
-            <div id="live-photo-card">
-                <img id="result-img" />
-                <video id="result-video" playsinline muted loop></video>
-                <div id="live-badge">LIVE</div>
-                <div id="hold-hint">👆 Tekan & tahan untuk mainkan</div>
-                <div id="ai-pick-badge">🤖 AI Pick</div>
+                <!-- === PROCESSING (GANTI UPLOAD SAAT PROSES) === -->
+                <div id="processing-step" class="step hidden">
+                    <div class="processing-animation">
+                        <div class="film-strip">
+                            <div class="frame"></div>
+                            <div class="frame"></div>
+                            <div class="frame"></div>
+                            <div class="frame"></div>
+                            <div class="frame"></div>
+                            <div class="frame"></div>
+                        </div>
+                        <div class="scan-line"></div>
+                    </div>
+                    <h2 class="processing-title">Memproses Video...</h2>
+                    <p class="processing-sub" id="processing-status">Menganalisis video</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-percent" id="progress-percent">0%</div>
+                    <div class="processing-steps">
+                        <div class="proc-step" data-step="1">
+                            <span class="step-dot"></span> Analisis video
+                        </div>
+                        <div class="proc-step" data-step="2">
+                            <span class="step-dot"></span> AI pilih frame terbaik
+                        </div>
+                        <div class="proc-step" data-step="3">
+                            <span class="step-dot"></span> Rekam 3 detik
+                        </div>
+                        <div class="proc-step" data-step="4">
+                            <span class="step-dot"></span> Finalisasi
+                        </div>
+                    </div>
+                </div>
+
+                <!-- === RESULT (BAWAH) === -->
+                <div id="result-step" class="step hidden">
+                    <h2 class="result-title">✅ Live Photo Siap!</h2>
+                    
+                    <div id="live-photo-card">
+                        <img id="result-img" />
+                        <video id="result-video" playsinline muted loop></video>
+                        <div id="live-badge">LIVE</div>
+                        <div id="ai-pick-badge">🤖 AI Pick</div>
+                        <div id="hold-hint">👆 Tekan & tahan untuk mainkan</div>
+                    </div>
+
+                    <div id="result-actions">
+                        <button id="download-btn" class="btn-primary">⬇️ Download</button>
+                        <button id="reset-btn" class="btn-secondary">🔄 Buat Lagi</button>
+                    </div>
+                </div>
+
             </div>
 
-            <div id="result-actions">
-                <button id="download-btn" class="btn-primary">⬇️ Download</button>
-                <button id="reset-btn" class="btn-secondary">🔄 Buat Lagi</button>
-            </div>
-        </div>
+            <!-- ============ KOLOM KANAN: AI PANEL ============ -->
+            <div id="right-column">
+                <div id="ai-panel">
+                    
+                    <!-- AI HEADER -->
+                    <div id="ai-header">
+                        <div class="ai-avatar">🤖</div>
+                        <div class="ai-info">
+                            <div class="ai-name">Zhan AI</div>
+                            <div class="ai-status">● Online</div>
+                        </div>
+                        <div class="ai-pulse"></div>
+                    </div>
 
-        <!-- AI ASSISTANT PANEL -->
-        <div id="ai-panel" class="hidden">
-            <div id="ai-header">
-                <div class="ai-avatar">🤖</div>
-                <div>
-                    <div class="ai-name">Zhan AI</div>
-                    <div class="ai-status">● Online</div>
+                    <!-- AI MESSAGES -->
+                    <div id="ai-messages">
+                        <div class="ai-msg bot">
+                            Yo bro! 🤖 Gue Zhan AI. Butuh bantuan? Tanya soal Live Photo, video, atau apapun!
+                        </div>
+                    </div>
+
+                    <!-- SUGGESTIONS -->
+                    <div id="ai-suggestions">
+                        <button class="ai-suggest">Apa itu Live Photo?</button>
+                        <button class="ai-suggest">Cara pakai</button>
+                        <button class="ai-suggest">Tips video</button>
+                    </div>
+
+                    <!-- INPUT -->
+                    <div id="ai-input-box">
+                        <input type="text" id="ai-input" placeholder="Tanya AI..." />
+                        <button id="ai-send">➤</button>
+                    </div>
+
                 </div>
-                <button id="ai-close-btn">✖</button>
             </div>
-            <div id="ai-messages">
-                <div class="ai-msg bot">
-                    Yo bro! 🤖 Gue Zhan AI. Butuh bantuan apa? Bisa tanya soal Live Photo, video, atau apapun!
-                </div>
-            </div>
-            <div id="ai-suggestions">
-                <button class="ai-suggest">Apa itu Live Photo?</button>
-                <button class="ai-suggest">Cara pakai website ini</button>
-                <button class="ai-suggest">Tips video bagus</button>
-            </div>
-            <div id="ai-input-box">
-                <input type="text" id="ai-input" placeholder="Tanya AI..." />
-                <button id="ai-send">➤</button>
-            </div>
+
         </div>
     </div>
 
@@ -124,4 +147,4 @@
 
     <script src="script.js"></script>
 </body>
-</html>
+                        </html>
