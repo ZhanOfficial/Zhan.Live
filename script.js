@@ -1,6 +1,6 @@
 // ============================================
 // ZhanOfficial Live — Video to Live Photo
-// with AI Assistant 🤖
+// with AI Assistant 🤖 (Sidebar Layout)
 // ============================================
 
 // ============================================
@@ -14,21 +14,19 @@ enterBtn.addEventListener('click', () => {
     welcomeScreen.classList.add('exit');
     app.classList.remove('hidden');
     
-    // Trigger animation masuk
     setTimeout(() => {
         app.classList.add('visible');
     }, 100);
     
-    // Hapus welcome screen dari DOM setelah animasi
     setTimeout(() => {
         welcomeScreen.style.display = 'none';
     }, 800);
     
     showToast('👋 Selamat datang di ZhanOfficial Live!');
     
-    // AI langsung sapa
+    // AI sapa
     setTimeout(() => {
-        openAIPanel();
+        addAIMessage('Yo! 🤖 Gue Zhan AI. Upload video kamu, nanti otomatis gue ubah jadi Live Photo. Butuh bantuan? Tanya aja!');
     }, 1500);
 });
 
@@ -52,9 +50,6 @@ const resetBtn = document.getElementById('reset-btn');
 const toast = document.getElementById('toast');
 
 // AI
-const aiToggleBtn = document.getElementById('ai-toggle-btn');
-const aiPanel = document.getElementById('ai-panel');
-const aiCloseBtn = document.getElementById('ai-close-btn');
 const aiMessages = document.getElementById('ai-messages');
 const aiInput = document.getElementById('ai-input');
 const aiSend = document.getElementById('ai-send');
@@ -96,20 +91,20 @@ fileInput.addEventListener('change', (e) => {
 });
 
 // ============================================
-// AUTO PROCESS (langsung saat video dipilih)
+// AUTO PROCESS
 // ============================================
 async function processVideoAuto(file) {
-    // Show processing
     uploadStep.classList.add('hidden');
     processingStep.classList.remove('hidden');
     resultStep.classList.add('hidden');
     
-    // Reset progress
     updateProgress(0);
     resetProcSteps();
     
+    addAIMessage('📥 Video diterima! Gue mulai proses ya...');
+    
     try {
-        // STEP 1: Load video
+        // STEP 1
         activateProcStep(1);
         processingStatus.textContent = 'Memuat video...';
         
@@ -131,35 +126,27 @@ async function processVideoAuto(file) {
         updateProgress(15);
         markProcStepDone(1);
         
-        // STEP 2: AI pilih momen terbaik
+        // STEP 2
         activateProcStep(2);
         processingStatus.textContent = '🤖 AI menganalisis video...';
-        
-        // AI: pilih momen terbaik (analisis durasi & pilih titik yang bagus)
         const aiPick = await aiPickBestMoment(hiddenVideo);
         await sleep(600);
         updateProgress(35);
         markProcStepDone(2);
         
-        // STEP 3: Ambil snapshot & rekam 3 detik
+        // STEP 3
         activateProcStep(3);
         processingStatus.textContent = '📸 Mengambil frame terbaik...';
         
         hiddenVideo.currentTime = aiPick.time;
-        await new Promise((r) => {
-            hiddenVideo.onseeked = () => r();
-        });
+        await new Promise((r) => { hiddenVideo.onseeked = () => r(); });
         
-        // Snapshot
         const imageDataURL = captureFrame(hiddenVideo);
         updateProgress(55);
         await sleep(300);
         
         processingStatus.textContent = '🎥 Merekam 3 detik video...';
-        
-        // Rekam 3 detik dari momen terpilih
         const videoBlob = await recordSegment(hiddenVideo, LIVE_DURATION, (progress) => {
-            // Update progress 55-85
             updateProgress(55 + progress * 30);
         });
         
@@ -167,14 +154,13 @@ async function processVideoAuto(file) {
         updateProgress(88);
         markProcStepDone(3);
         
-        // STEP 4: Finalisasi
+        // STEP 4
         activateProcStep(4);
         processingStatus.textContent = '✨ Finalisasi Live Photo...';
         await sleep(700);
         updateProgress(100);
         markProcStepDone(4);
         
-        // Simpan hasil
         livePhotoResult = {
             imageDataURL,
             videoBlob,
@@ -189,8 +175,8 @@ async function processVideoAuto(file) {
     } catch (err) {
         console.error(err);
         showToast('❌ Gagal proses: ' + err.message);
+        addAIMessage('❌ Wah, ada error nih: ' + err.message + '. Coba upload video lain ya.');
         
-        // Balik ke upload
         processingStep.classList.add('hidden');
         uploadStep.classList.remove('hidden');
     }
@@ -200,7 +186,6 @@ function waitForCanPlay(videoEl) {
     return new Promise((resolve) => {
         if (videoEl.readyState >= 3) return resolve();
         videoEl.oncanplaythrough = () => resolve();
-        // Fallback
         setTimeout(resolve, 2000);
     });
 }
@@ -209,25 +194,21 @@ function waitForCanPlay(videoEl) {
 // AI PICK BEST MOMENT
 // ============================================
 async function aiPickBestMoment(videoEl) {
-    // Simple AI heuristic:
-    // - Kalau video > 5 detik, ambil bagian tengah (biasanya paling stabil)
-    // - Kalau pendek, ambil awal
     const duration = videoEl.duration;
     let time = 0;
     let reason = '';
     
     if (duration <= 3.5) {
         time = 0;
-        reason = 'Video pendek — ambil dari awal';
+        reason = 'video pendek';
     } else if (duration <= 10) {
         time = duration / 4;
-        reason = 'Video pendek — ambil seperempat awal';
+        reason = 'awal video';
     } else {
         time = duration * 0.3;
-        reason = 'Video panjang — AI pilih 30% durasi (momen tengah)';
+        reason = 'momen tengah';
     }
     
-    // Pastikan tidak melebihi batas
     if (time + LIVE_DURATION > duration) {
         time = Math.max(0, duration - LIVE_DURATION);
     }
@@ -293,9 +274,7 @@ function recordSegment(videoEl, duration, onProgress) {
             const startTime = videoEl.currentTime;
             videoEl.currentTime = startTime;
             
-            await new Promise((r) => {
-                videoEl.onseeked = () => r();
-            });
+            await new Promise((r) => { videoEl.onseeked = () => r(); });
             
             recorder.start();
             videoEl.play();
@@ -383,14 +362,8 @@ function showResult() {
     
     livePhotoCard.classList.remove('playing');
     
-    showToast('✅ Live Photo siap! 🤖 AI pick terbaik');
-    
-    // AI kasih komentar
-    if (livePhotoResult.aiReason) {
-        setTimeout(() => {
-            addAIMessage(`Live Photo kamu udah jadi! 🤖 Gue pilih momen di detik ${livePhotoResult.aiTime.toFixed(1)} — ${livePhotoResult.aiReason}. Tekan & tahan foto buat mainkan videonya! 🎬`);
-        }, 1200);
-    }
+    showToast('✅ Live Photo siap!');
+    addAIMessage(`✅ Live Photo kamu udah jadi! Gue pilih momen di detik ${livePhotoResult.aiTime.toFixed(1)} (${livePhotoResult.aiReason}). Tekan & tahan foto buat mainkan videonya! 🎬`);
 }
 
 // ============================================
@@ -476,18 +449,6 @@ resetBtn.addEventListener('click', () => {
 // ============================================
 // AI ASSISTANT
 // ============================================
-aiToggleBtn.addEventListener('click', openAIPanel);
-aiCloseBtn.addEventListener('click', closeAIPanel);
-
-function openAIPanel() {
-    aiPanel.classList.remove('hidden');
-}
-
-function closeAIPanel() {
-    aiPanel.classList.add('hidden');
-}
-
-// AI Knowledge Base
 const aiKnowledge = {
     'live photo': 'Live Photo itu kayak di iPhone — foto statis + video 3 detik. Pas kamu tap & tahan, videonya main. Website ini bikin Live Photo dari video yang kamu upload! 📸',
     'cara pakai': 'Gampang banget bro! 1) Klik/drag video ke halaman, 2) AI otomatis pilih momen terbaik, 3) Tunggu proses, 4) Live Photo siap! Tekan & tahan buat mainkan. 🎬',
@@ -521,14 +482,12 @@ function sendAIMessage() {
     addAIMessage(msg, 'user');
     aiInput.value = '';
     
-    // Show typing
     const typingMsg = document.createElement('div');
     typingMsg.className = 'ai-msg bot typing';
     typingMsg.textContent = 'Zhan AI lagi mikir';
     aiMessages.appendChild(typingMsg);
     aiMessages.scrollTop = aiMessages.scrollHeight;
     
-    // AI think
     setTimeout(() => {
         typingMsg.remove();
         const reply = getAIReply(msg);
@@ -547,12 +506,10 @@ function addAIMessage(text, sender = 'bot') {
 function getAIReply(input) {
     const lower = input.toLowerCase();
     
-    // Cek keyword
     for (const [key, value] of Object.entries(aiKnowledge)) {
         if (lower.includes(key)) return value;
     }
     
-    // Fallback responses
     const fallbacks = [
         'Hmm, gue kurang ngerti pertanyaan itu. Coba tanya soal "Live Photo", "cara pakai", atau "tips video" ya! 🤖',
         'Wah, itu di luar pengetahuan gue. Tapi gue bisa bantu soal Live Photo, video, atau website ini! 🎬',
@@ -580,4 +537,3 @@ window.addEventListener('beforeunload', () => {
 });
 
 console.log('🎬 ZhanOfficial Live loaded! 🤖');
-console.log('💡 Fitur: Video → Live Photo otomatis + AI Assistant');
